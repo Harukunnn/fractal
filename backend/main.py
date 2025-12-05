@@ -118,6 +118,8 @@ class SessionSummary(BaseModel):
 
 @app.post("/auth/register", response_model=AuthResponse, status_code=201)
 def register(payload: RegisterPayload) -> AuthResponse:
+    if len(payload.password) < 8:
+        raise HTTPException(status_code=400, detail="Mot de passe trop court (min. 8 caractères)")
     if payload.email in STATE.credentials:
         raise HTTPException(status_code=409, detail="Email déjà enregistré")
     user = User(name=payload.name, email=payload.email, last_active=datetime.utcnow())
@@ -207,6 +209,7 @@ def answer_exercise(exercise_id: str, payload: ExerciseAnswer, user_id: str) -> 
     unit_id = combo.unit_ids[0] if combo else ""
     progress_key = f"{user_id}:{unit_id}"
     progress = STATE.progress.get(progress_key) or Progress(user_id=user_id, unit_id=unit_id)
+    previous_status = progress.status
     progress.mark_result(success)
     STATE.progress[progress_key] = progress
 
@@ -214,6 +217,8 @@ def answer_exercise(exercise_id: str, payload: ExerciseAnswer, user_id: str) -> 
     if success:
         STATE.users[user_id].streak += 1
         _log_event("exercise_completed", user_id=user_id, unit_id=unit_id, exercise_id=exercise_id)
+        if progress.status == "mastered" and previous_status != "mastered":
+            _log_event("unit_mastered", user_id=user_id, unit_id=unit_id)
     else:
         STATE.users[user_id].streak = max(0, STATE.users[user_id].streak - 1)
         _log_event("exercise_failed", user_id=user_id, unit_id=unit_id, exercise_id=exercise_id)
@@ -284,6 +289,43 @@ def fractal_map() -> List[FractalNode]:
         combos = [combo for combo in STATE.combinations.values() if unit.id in combo.unit_ids]
         result.append(FractalNode(unit=unit, related_combinations=combos))
     return result
+
+
+@app.get("/exercises/next", response_model=Exercise)
+def next_exercise(user_id: str, limit: int = 5) -> Exercise:
+    if user_id not in STATE.users:
+        raise HTTPException(status_code=404, detail="Utilisateur introuvable")
+    exercises = available_exercises(STATE, user_id, limit=limit)
+    if not exercises:
+        raise HTTPException(status_code=404, detail="Aucun exercice disponible")
+    choice = exercises[0]
+    _log_event("exercise_started", user_id=user_id, exercise_id=choice.id)
+    return choice
+
+
+@app.post("/demo/bootstrap", response_model=AuthResponse)
+def bootstrap_demo() -> AuthResponse:
+    """Crée un compte éphémère et pré-remplit le moteur pour démarrer en 10 secondes."""
+
+    created = seed_state(STATE) if not STATE.units else {"units": [], "combinations": [], "exercises": []}
+    if STATE.users:
+        # Réutiliser le premier compte existant comme compte demo si présent
+        user = next(iter(STATE.users.values()))
+    else:
+        user = User(name="Explorer", email=f"demo+{uuid4().hex[:6]}@fractale.app", last_active=datetime.utcnow())
+        STATE.users[user.id] = user
+        STATE.credentials[user.email] = _hash_password("fractale123")
+        STATE.account_index[user.email] = user.id
+
+    _init_progress_for_user(user)
+    for unit_id in created.get("units", []):
+        key = f"{user.id}:{unit_id}"
+        STATE.progress[key] = Progress(user_id=user.id, unit_id=unit_id)
+
+    token = _create_session(user.id)
+    _log_event("seed_loaded", metadata={"units": str(len(created.get("units", [])))})
+    _log_event("user_logged_in", user_id=user.id)
+    return AuthResponse(token=token, user=user)
 
 
 @app.post("/seed")
