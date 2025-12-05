@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fractale Learning MVP</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f6f8fb; }
+    header { background: linear-gradient(90deg, #5f72bd 0%, #9b23ea 100%); color: white; padding: 16px; }
+    main { padding: 16px; display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+    section { background: white; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    h2 { margin-top: 0; }
+    label { display: block; margin-bottom: 8px; font-weight: bold; }
+    input, select, button { width: 100%; padding: 8px; margin-bottom: 8px; border-radius: 6px; border: 1px solid #d4d9e2; }
+    button { background: #5f72bd; color: white; border: none; cursor: pointer; }
+    button:hover { background: #9b23ea; }
+    ul { padding-left: 16px; }
+    .exercise { border: 1px solid #d4d9e2; border-radius: 6px; padding: 8px; margin-bottom: 8px; }
+    .badge { display: inline-block; background: #eef2ff; color: #5f72bd; padding: 2px 8px; border-radius: 999px; font-size: 12px; margin-right: 4px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Fractale Learning — MVP</h1>
+    <p>Micro-boucles rapides, feedback immédiat et moteur fractal.</p>
+  </header>
+  <main>
+    <section>
+      <h2>Authentification</h2>
+      <form id="register-form">
+        <label for="register-name">Nom</label>
+        <input id="register-name" name="name" placeholder="Camille" required />
+        <label for="register-email">Email</label>
+        <input id="register-email" name="email" type="email" placeholder="camille@example.com" required />
+        <label for="register-password">Mot de passe</label>
+        <input id="register-password" name="password" type="password" required />
+        <button type="submit">Inscription</button>
+      </form>
+      <form id="login-form">
+        <label for="login-email">Email</label>
+        <input id="login-email" type="email" required />
+        <label for="login-password">Mot de passe</label>
+        <input id="login-password" type="password" required />
+        <button type="submit">Connexion</button>
+      </form>
+      <button id="logout-btn">Déconnexion</button>
+      <p id="auth-info"></p>
+    </section>
+
+    <section>
+      <h2>Créer un utilisateur</h2>
+      <form id="user-form">
+        <label for="user-name">Nom</label>
+        <input id="user-name" name="name" placeholder="Camille" required />
+        <button type="submit">Créer</button>
+      </form>
+      <p id="user-info"></p>
+    </section>
+
+    <section>
+      <h2>Ajouter une Unité Minimale</h2>
+      <form id="unit-form">
+        <label for="phrase">Phrase / UM</label>
+        <input id="phrase" name="phrase" required />
+        <label for="translation">Traduction</label>
+        <input id="translation" name="translation" placeholder="optionnel" />
+        <label for="tags">Tags (séparés par des virgules)</label>
+        <input id="tags" name="tags" value="base" required />
+        <label for="unit_type">Type</label>
+        <select id="unit_type" name="unit_type">
+          <option value="vocabulaire">Vocabulaire</option>
+          <option value="structure">Structure</option>
+          <option value="concept">Concept</option>
+          <option value="structure_position">Structure positionnelle</option>
+          <option value="lieu">Lieu</option>
+          <option value="sujet">Sujet</option>
+          <option value="verbe">Verbe</option>
+          <option value="objet">Objet</option>
+        </select>
+        <label for="difficulty">Difficulté (1-5)</label>
+        <input id="difficulty" name="difficulty" type="number" min="1" max="5" value="1" />
+        <label for="language_from">Langue source</label>
+        <input id="language_from" name="language_from" value="fr" />
+        <label for="language_to">Langue cible</label>
+        <input id="language_to" name="language_to" value="en" />
+        <button type="submit">Ajouter et générer</button>
+      </form>
+      <div>
+        <strong>UM enregistrées</strong>
+        <ul id="unit-list"></ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>Exercices disponibles</h2>
+      <button id="refresh-exercises">Récupérer</button>
+      <div id="exercise-list"></div>
+    </section>
+
+    <section>
+      <h2>Carte fractale simplifiée</h2>
+      <button id="map-btn">Voir les connexions</button>
+      <div id="map"></div>
+    </section>
+
+    <section>
+      <h2>Suivi de progression</h2>
+      <button id="progress-btn">Mettre à jour</button>
+      <ul id="progress-list"></ul>
+    </section>
+
+    <section>
+      <h2>Session & badges</h2>
+      <button id="session-btn">Récap session</button>
+      <div id="session-summary"></div>
+    </section>
+
+    <section>
+      <h2>Données de départ</h2>
+      <button id="seed-btn">Pré-remplir</button>
+      <div id="status"></div>
+    </section>
+
+    <section>
+      <h2>Analytics</h2>
+      <button id="analytics-btn">Rafraîchir les événements</button>
+      <ul id="analytics-list"></ul>
+    </section>
+  </main>
+
+  <script>
+    const API = `${window.location.origin.replace(/:\d+$/, '')}:8000`;
+    let userId = null;
+    let authToken = null;
+
+    const authHeaders = () => authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
+
+    async function registerUser(event) {
+      event.preventDefault();
+      const payload = {
+        name: document.getElementById('register-name').value,
+        email: document.getElementById('register-email').value,
+        password: document.getElementById('register-password').value,
+      };
+      const res = await fetch(`${API}/auth/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const data = await res.json();
+      userId = data.user.id;
+      authToken = data.token;
+      document.getElementById('auth-info').innerText = `Connecté en tant que ${data.user.email}`;
+      await refreshProgress();
+      await loadExercises();
+      await loadMap();
+    }
+
+    async function loginUser(event) {
+      event.preventDefault();
+      const payload = {
+        email: document.getElementById('login-email').value,
+        password: document.getElementById('login-password').value,
+      };
+      const res = await fetch(`${API}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const data = await res.json();
+      if (res.status !== 200) { alert(data.detail || 'Erreur de connexion'); return; }
+      userId = data.user.id;
+      authToken = data.token;
+      document.getElementById('auth-info').innerText = `Connecté en tant que ${data.user.email}`;
+      await refreshProgress();
+      await loadExercises();
+      await loadMap();
+    }
+
+    async function logoutUser() {
+      if (!authToken) return;
+      await fetch(`${API}/auth/logout?token=${authToken}`, { method: 'POST' });
+      userId = null;
+      authToken = null;
+      document.getElementById('auth-info').innerText = 'Déconnecté';
+      document.getElementById('user-info').innerText = '';
+      document.getElementById('exercise-list').innerHTML = '';
+    }
+
+    async function createUser(event) {
+      event.preventDefault();
+      const name = document.getElementById('user-name').value;
+      const res = await fetch(`${API}/users`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+      const data = await res.json();
+      userId = data.id;
+      document.getElementById('user-info').innerText = `Utilisateur actif: ${data.name} (streak ${data.streak})`;
+      await refreshProgress();
+      await loadExercises();
+      await loadMap();
+      await loadAnalytics();
+    }
+
+    async function addUnit(event) {
+      event.preventDefault();
+      if (!userId) { alert('Créez d'abord un utilisateur'); return; }
+      const payload = {
+        phrase: document.getElementById('phrase').value,
+        translation: document.getElementById('translation').value || null,
+        tags: document.getElementById('tags').value.split(',').map(t => t.trim()).filter(Boolean),
+        unit_type: document.getElementById('unit_type').value,
+        difficulty: parseInt(document.getElementById('difficulty').value, 10),
+        language_from: document.getElementById('language_from').value,
+        language_to: document.getElementById('language_to').value,
+      };
+      await fetch(`${API}/units`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      await refreshUnits();
+      await loadExercises();
+      await refreshProgress();
+      await loadMap();
+      event.target.reset();
+    }
+
+    async function refreshUnits() {
+      const res = await fetch(`${API}/units`);
+      const data = await res.json();
+      const list = document.getElementById('unit-list');
+      list.innerHTML = '';
+      data.forEach(unit => {
+        const li = document.createElement('li');
+        li.textContent = `${unit.phrase} (${unit.language_from} → ${unit.language_to}) — ${unit.unit_type} [${unit.tags.join(', ')}]`;
+        list.appendChild(li);
+      });
+    }
+
+    async function loadExercises() {
+      const res = await fetch(`${API}/exercises${userId ? `?user_id=${userId}` : ''}`);
+      const data = await res.json();
+      const container = document.getElementById('exercise-list');
+      container.innerHTML = '';
+      data.forEach(ex => {
+        const div = document.createElement('div');
+        div.className = 'exercise';
+        div.innerHTML = `<div class="badge">${ex.type}</div><p>${ex.prompt}</p>`;
+        if (ex.type === 'multiple_choice') {
+          ex.options.forEach(option => {
+            const btn = document.createElement('button');
+            btn.textContent = option.value;
+            btn.onclick = () => submitAnswer(ex.id, option.value, div);
+            div.appendChild(btn);
+          });
+        } else if (ex.type === 'drag_drop') {
+          const helper = document.createElement('p');
+          helper.textContent = 'Cliquez sur les mots pour reconstituer la phrase';
+          const input = document.createElement('input');
+          const tokens = document.createElement('div');
+          ex.options.forEach(option => {
+            const btn = document.createElement('button');
+            btn.textContent = option.value;
+            btn.type = 'button';
+            btn.onclick = () => {
+              input.value = `${input.value} ${option.value}`.trim();
+            };
+            tokens.appendChild(btn);
+          });
+          const send = document.createElement('button');
+          send.textContent = 'Valider';
+          send.onclick = () => submitAnswer(ex.id, input.value, div);
+          div.appendChild(helper);
+          div.appendChild(tokens);
+          div.appendChild(input);
+          div.appendChild(send);
+        } else {
+          const input = document.createElement('input');
+          const btn = document.createElement('button');
+          btn.textContent = 'Valider';
+          btn.onclick = () => submitAnswer(ex.id, input.value, div);
+          div.appendChild(input);
+          div.appendChild(btn);
+        }
+        container.appendChild(div);
+      });
+    }
+
+    async function submitAnswer(exerciseId, answer, container) {
+      if (!userId) { alert('Créez d'abord un utilisateur'); return; }
+      const res = await fetch(`${API}/exercises/${exerciseId}/answer?user_id=${userId}`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify({ answer }) });
+      const data = await res.json();
+      const message = document.createElement('p');
+      message.textContent = data.correct ? `✅ Bravo !` : `❌ Correct: ${data.expected}`;
+      if (data.highlight) {
+        const hint = document.createElement('small');
+        hint.textContent = `Attendu: ${data.highlight}`;
+        container.appendChild(hint);
+      }
+      const details = document.createElement('small');
+      const hours = Math.max(1, Math.round((new Date(data.progress.next_review_at) - new Date())/3600000));
+      details.textContent = `Maîtrise ${data.progress.proficiency}/5 • Précision ${data.progress.accuracy}% • Prochain rappel dans ${hours}h`;
+      container.appendChild(message);
+      container.appendChild(details);
+      await refreshProgress();
+    }
+
+    async function seed() {
+      const res = await fetch(`${API}/seed`, { method: 'POST' });
+      const data = await res.json();
+      document.getElementById('status').innerText = data.message;
+      await refreshUnits();
+      await loadExercises();
+      await refreshProgress();
+      await loadMap();
+    }
+
+  async function loadMap() {
+      const res = await fetch(`${API}/fractal-map`);
+      const data = await res.json();
+      const container = document.getElementById('map');
+      container.innerHTML = '';
+      data.forEach(node => {
+        const block = document.createElement('div');
+        block.className = 'exercise';
+        const combos = node.related_combinations.map(c => `«${c.text}»`).join(', ');
+        block.innerHTML = `<strong>${node.unit.phrase}</strong> (${node.unit.unit_type})<br><small>Combinaisons: ${combos || '—'}</small>`;
+        container.appendChild(block);
+      });
+    }
+
+    async function loadSessionSummary() {
+      if (!userId) { alert('Créez d\'abord un utilisateur'); return; }
+      const res = await fetch(`${API}/session/${userId}`);
+      const data = await res.json();
+      const block = document.getElementById('session-summary');
+      block.innerHTML = `<p>Mastered: ${data.mastered} • Faibles: ${data.weak_units} • Révisions à venir: ${data.upcoming_reviews}</p>`;
+      const badgeList = document.createElement('div');
+      data.badges.forEach(b => {
+        const span = document.createElement('span');
+        span.className = 'badge';
+        span.textContent = b;
+        badgeList.appendChild(span);
+      });
+      block.appendChild(badgeList);
+    }
+
+    async function loadAnalytics() {
+      const res = await fetch(`${API}/analytics`);
+      const data = await res.json();
+      const list = document.getElementById('analytics-list');
+      list.innerHTML = '';
+      data.forEach(event => {
+        const li = document.createElement('li');
+        li.textContent = `${event.name} — ${new Date(event.created_at).toLocaleTimeString()} ${event.unit_id ? '• UM ' + event.unit_id.slice(0,6) : ''}`;
+        list.appendChild(li);
+      });
+    }
+
+    async function refreshProgress() {
+      if (!userId) { return; }
+      const res = await fetch(`${API}/progress?user_id=${userId}`);
+      const data = await res.json();
+      const list = document.getElementById('progress-list');
+      list.innerHTML = '';
+      data.forEach(item => {
+        const li = document.createElement('li');
+        const next = new Date(item.next_review_at);
+        const hrs = Math.max(1, Math.round((next - new Date())/3600000));
+        li.textContent = `UM ${item.unit_id.slice(0,6)}… : maîtrise ${item.proficiency}/5 — score ${item.mastery_score} — statut ${item.status} — prochain rappel ${hrs}h`;
+        list.appendChild(li);
+      });
+    }
+
+    document.getElementById('register-form').addEventListener('submit', registerUser);
+    document.getElementById('login-form').addEventListener('submit', loginUser);
+    document.getElementById('logout-btn').addEventListener('click', logoutUser);
+    document.getElementById('user-form').addEventListener('submit', createUser);
+    document.getElementById('unit-form').addEventListener('submit', addUnit);
+    document.getElementById('refresh-exercises').addEventListener('click', loadExercises);
+    document.getElementById('seed-btn').addEventListener('click', seed);
+    document.getElementById('map-btn').addEventListener('click', loadMap);
+    document.getElementById('progress-btn').addEventListener('click', refreshProgress);
+    document.getElementById('session-btn').addEventListener('click', loadSessionSummary);
+    document.getElementById('analytics-btn').addEventListener('click', loadAnalytics);
+
+    refreshUnits();
+    loadMap();
+    loadAnalytics();
+  </script>
+</body>
+</html>
