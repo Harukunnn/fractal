@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fractale Learning — MVP</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #0b1221;
+      --accent: #7c3aed;
+      --accent-2: #38bdf8;
+      --muted: #94a3b8;
+      --text: #e2e8f0;
+      --success: #10b981;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; background: linear-gradient(180deg, #0b1221 0%, #0f172a 60%, #0b1221 100%); color: var(--text); }
+    header { padding: 32px 24px 12px; position: sticky; top: 0; z-index: 10; background: rgba(12, 18, 32, 0.9); backdrop-filter: blur(10px); border-bottom: 1px solid #1f2937; box-shadow: 0 10px 40px rgba(0,0,0,0.35); }
+    h1 { margin: 0 0 8px; letter-spacing: -0.5px; }
+    p { color: var(--muted); }
+    .hero { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; align-items: center; }
+    .pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: rgba(124, 58, 237, 0.2); color: #d8b4fe; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; }
+    .cta { display: inline-flex; align-items: center; gap: 8px; padding: 12px 16px; border-radius: 10px; border: none; background: linear-gradient(90deg, #7c3aed, #38bdf8); color: white; font-weight: 700; cursor: pointer; box-shadow: 0 10px 30px rgba(124, 58, 237, 0.35); }
+    .ghost { background: transparent; border: 1px solid #1f2937; color: var(--text); padding: 10px 14px; border-radius: 10px; cursor: pointer; }
+    nav { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+    nav button { padding: 10px 14px; border-radius: 10px; border: 1px solid #1f2937; background: linear-gradient(180deg,#0b1221,#0f172a); color: var(--muted); cursor: pointer; }
+    nav button.active { background: rgba(124, 58, 237, 0.2); border-color: #7c3aed; color: #e9d5ff; }
+    main { padding: 16px 24px 40px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+    .card { background: #0b1221; border: 1px solid #1f2937; border-radius: 14px; padding: 16px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35); }
+    .card h2 { margin-top: 0; }
+    label { display: block; margin: 10px 0 6px; font-weight: 600; color: var(--muted); }
+    input, select { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #1f2937; background: #0f172a; color: var(--text); }
+    button { font-family: inherit; }
+    .list { display: grid; gap: 10px; margin-top: 10px; }
+    .badge { display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 999px; background: rgba(56, 189, 248, 0.15); color: #a5f3fc; font-size: 12px; }
+    .stat { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: rgba(255, 255, 255, 0.03); border-radius: 12px; border: 1px solid #1f2937; }
+    .muted { color: var(--muted); font-size: 14px; }
+    .exercise { padding: 12px; border-radius: 12px; border: 1px solid #1f2937; background: rgba(255, 255, 255, 0.02); }
+    .exercise button { margin-top: 8px; width: auto; }
+    .progress-bar { width: 100%; height: 8px; background: #1f2937; border-radius: 999px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #7c3aed, #38bdf8); width: 0%; transition: width 0.3s ease; }
+    .flex { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .hidden { display: none; }
+    .subtle { color: #cbd5e1; font-size: 13px; }
+    .split { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+    .token-container button { margin: 4px 4px 0 0; background: rgba(124, 58, 237, 0.14); border: 1px solid #1f2937; color: var(--text); }
+    .feedback { font-weight: 700; margin-top: 8px; }
+    .pill.success { background: rgba(16, 185, 129, 0.18); color: #bbf7d0; }
+    .pill.warn { background: rgba(239, 68, 68, 0.14); color: #fecdd3; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="hero">
+      <div>
+        <div class="pill">Apprentissage fractal • MVP guidé</div>
+        <h1>Commence ton entraînement en 10 secondes</h1>
+        <p>Ajoute des Unités Minimales, laisse le moteur générer les combinaisons, pratique immédiatement avec des exercices réactifs.</p>
+        <div class="flex" style="margin-top:12px;">
+          <button class="cta" id="quickstart">🚀 Commencer maintenant</button>
+          <button class="ghost" data-nav="dashboard">Aller au tableau de bord</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Pourquoi c'est prêt ?</h2>
+        <ul>
+          <li>Seed FR→EN intégrée</li>
+          <li>Compte demo auto-créé</li>
+          <li>Génération instantanée d'exercices</li>
+          <li>Feedback coloré & SRS simplifié</li>
+        </ul>
+        <div class="stat"><span>Connexion</span><span id="auth-badge" class="badge">Hors-ligne</span></div>
+      </div>
+    </div>
+    <nav>
+      <button class="active" data-nav="landing">Accueil</button>
+      <button data-nav="dashboard">Entraînement</button>
+      <button data-nav="units">Atelier UM</button>
+      <button data-nav="progress">Progression</button>
+      <button data-nav="storage">Données</button>
+      <button data-nav="auth">Compte</button>
+    </nav>
+  </header>
+
+  <main>
+    <section data-page="landing" class="grid">
+      <div class="card">
+        <h2>Onboarding express</h2>
+        <p>1. Clique sur « Commencer maintenant » pour générer un compte demo et pré-remplir les UM.<br>2. Lance une session : une question est proposée automatiquement.<br>3. Ajoute tes propres UM pour enrichir l'atelier.</p>
+        <div class="stat">
+          <div>
+            <div class="muted">Prêt en</div>
+            <div style="font-size:20px;font-weight:700;">&lt; 10 secondes</div>
+          </div>
+          <button class="cta" id="cta-start">Démarrer</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Modes d'entraînement</h2>
+        <div class="list">
+          <div class="stat"><span>Zen</span><span class="muted">Réponses libres, rythme doux</span></div>
+          <div class="stat"><span>Vitesse</span><span class="muted">QCM + drag/drop rapides</span></div>
+          <div class="stat"><span>Hardcore</span><span class="muted">SRS prioritaire, pénalité sur erreurs</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Raccourcis</h2>
+        <div class="flex">
+          <button class="ghost" id="start-session">Nouvelle question</button>
+          <button class="ghost" id="add-seed">Recharger les seeds</button>
+          <button class="ghost" data-nav="units">Ajouter une UM</button>
+        </div>
+      </div>
+    </section>
+
+    <section data-page="dashboard" class="grid hidden">
+      <div class="card">
+        <h2>Session en cours</h2>
+        <div id="current-exercise" class="exercise">Clique sur « Nouvelle question » pour commencer.</div>
+        <div class="flex" style="margin-top:10px;">
+          <button class="cta" id="next-exercise">Nouvelle question</button>
+          <button class="ghost" id="refresh-exercises">Liste des exercices</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Exercices disponibles</h2>
+        <div id="exercise-list" class="list"></div>
+      </div>
+      <div class="card">
+        <h2>Badges & streak</h2>
+        <div class="stat">
+          <div>
+            <div class="muted">Streak actuel</div>
+            <div id="streak-value" style="font-size:22px;font-weight:700;">0</div>
+          </div>
+          <span id="badges" class="badge">Aucun badge</span>
+        </div>
+        <div id="session-summary" class="list"></div>
+      </div>
+    </section>
+
+    <section data-page="units" class="grid hidden">
+      <div class="card">
+        <h2>Ajouter une Unité Minimale</h2>
+        <form id="unit-form">
+          <label for="phrase">Phrase / UM</label>
+          <input id="phrase" name="phrase" placeholder="je suis à" required />
+          <label for="translation">Traduction</label>
+          <input id="translation" name="translation" placeholder="I am at" />
+          <label for="tags">Tags (séparés par des virgules)</label>
+          <input id="tags" name="tags" value="structure_position" required />
+          <div class="split">
+            <div>
+              <label for="unit_type">Type</label>
+              <select id="unit_type" name="unit_type">
+                <option value="vocabulaire">Vocabulaire</option>
+                <option value="structure_position">Structure positionnelle</option>
+                <option value="lieu">Lieu</option>
+                <option value="sujet">Sujet</option>
+                <option value="verbe">Verbe</option>
+                <option value="objet">Objet</option>
+              </select>
+            </div>
+            <div>
+              <label for="difficulty">Difficulté (1-5)</label>
+              <input id="difficulty" type="number" min="1" max="5" value="1" />
+            </div>
+          </div>
+          <div class="split">
+            <div>
+              <label for="language_from">Langue source</label>
+              <input id="language_from" value="fr" />
+            </div>
+            <div>
+              <label for="language_to">Langue cible</label>
+              <input id="language_to" value="en" />
+            </div>
+          </div>
+          <button class="cta" type="submit">Ajouter et générer</button>
+        </form>
+      </div>
+      <div class="card">
+        <h2>UM enregistrées</h2>
+        <div id="unit-list" class="list"></div>
+      </div>
+      <div class="card">
+        <h2>Carte fractale simplifiée</h2>
+        <div id="map" class="list"></div>
+      </div>
+    </section>
+
+    <section data-page="progress" class="grid hidden">
+      <div class="card">
+        <h2>Progression</h2>
+        <div id="progress-list" class="list"></div>
+      </div>
+      <div class="card">
+        <h2>Analytics</h2>
+        <button class="ghost" id="analytics-btn">Rafraîchir</button>
+        <ul id="analytics-list"></ul>
+      </div>
+      <div class="card">
+        <h2>Rappels SRS</h2>
+        <p class="muted">Les rappels priorisent les UM faibles & revues. Les badges sont attribués automatiquement.</p>
+        <button class="cta" id="session-btn">Récap session</button>
+      </div>
+    </section>
+
+    <section data-page="storage" class="grid hidden">
+      <div class="card">
+        <h2>Organisation des données</h2>
+        <p class="muted">Les comptes, unités, combinaisons, exercices et sessions sont sauvegardés automatiquement en local (JSON).</p>
+        <div id="storage-status" class="stat">Chargement de l'état…</div>
+        <div class="subtle" id="storage-path"></div>
+      </div>
+      <div class="card">
+        <h2>Sauvegarde manuelle</h2>
+        <p class="muted">Forcer une sauvegarde ou recharger le dernier snapshot local.</p>
+        <div class="flex">
+          <button class="cta" id="save-btn">Sauvegarder maintenant</button>
+          <button class="ghost" id="load-btn">Recharger la sauvegarde</button>
+        </div>
+        <div id="storage-feedback" class="muted" style="margin-top:8px;"></div>
+      </div>
+    </section>
+
+    <section data-page="auth" class="grid hidden">
+      <div class="card">
+        <h2>Inscription</h2>
+        <form id="register-form">
+          <label for="register-name">Nom</label>
+          <input id="register-name" required />
+          <label for="register-email">Email</label>
+          <input id="register-email" type="email" required />
+          <label for="register-password">Mot de passe (min 8)</label>
+          <input id="register-password" type="password" required />
+          <button class="cta" type="submit">Créer un compte</button>
+        </form>
+      </div>
+      <div class="card">
+        <h2>Connexion</h2>
+        <form id="login-form">
+          <label for="login-email">Email</label>
+          <input id="login-email" type="email" required />
+          <label for="login-password">Mot de passe</label>
+          <input id="login-password" type="password" required />
+          <button class="cta" type="submit">Connexion</button>
+        </form>
+        <button class="ghost" id="logout-btn">Déconnexion</button>
+        <p id="auth-info" class="muted"></p>
+      </div>
+      <div class="card">
+        <h2>Utilisateur actif</h2>
+        <form id="user-form">
+          <label for="user-name">Nom rapide</label>
+          <input id="user-name" placeholder="Camille" />
+          <button class="ghost" type="submit">Créer un profil local</button>
+        </form>
+        <div id="user-info" class="stat">Aucun utilisateur actif</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const API = `${window.location.origin.replace(/:\d+$/, '')}:8000`;
+    let userId = null;
+    let authToken = null;
+
+    const pages = document.querySelectorAll('[data-page]');
+    const navButtons = document.querySelectorAll('nav button');
+
+    function switchPage(target) {
+      pages.forEach(p => p.classList.toggle('hidden', p.getAttribute('data-page') !== target));
+      navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.nav === target));
+      if (target === 'storage') { loadStorageInfo(); }
+    }
+
+    navButtons.forEach(btn => btn.addEventListener('click', () => switchPage(btn.dataset.nav)));
+    document.getElementById('quickstart').addEventListener('click', bootstrapDemo);
+    document.getElementById('cta-start').addEventListener('click', bootstrapDemo);
+    document.querySelectorAll('[data-nav="dashboard"]').forEach(btn => btn.addEventListener('click', () => switchPage('dashboard')));
+
+    function setAuth(auth) {
+      userId = auth.user.id;
+      authToken = auth.token;
+      localStorage.setItem('fractale_user', JSON.stringify({ userId, token: authToken, email: auth.user.email }));
+      document.getElementById('auth-badge').textContent = auth.user.email || 'Connecté';
+      document.getElementById('auth-badge').classList.add('pill');
+      document.getElementById('auth-info').textContent = `Connecté en tant que ${auth.user.email || auth.user.name}`;
+      document.getElementById('user-info').textContent = `Profil : ${auth.user.name} — ${auth.user.email || 'demo'}`;
+      refreshUnits();
+      refreshProgress();
+      loadMap();
+      loadSessionSummary();
+      loadExercises();
+    }
+
+    function authHeaders() { return authToken ? { 'Authorization': `Bearer ${authToken}` } : {}; }
+
+    async function bootstrapDemo() {
+      const res = await fetch(`${API}/demo/bootstrap`, { method: 'POST' });
+      const data = await res.json();
+      if (res.status !== 200) { alert(data.detail || 'Impossible de préparer la démo'); return; }
+      setAuth(data);
+      switchPage('dashboard');
+      await fetchNextExercise();
+    }
+
+    async function registerUser(event) {
+      event.preventDefault();
+      const payload = {
+        name: document.getElementById('register-name').value,
+        email: document.getElementById('register-email').value,
+        password: document.getElementById('register-password').value,
+      };
+      const res = await fetch(`${API}/auth/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const data = await res.json();
+      if (res.status !== 201) { alert(data.detail || 'Erreur'); return; }
+      setAuth(data);
+      switchPage('dashboard');
+    }
+
+    async function loginUser(event) {
+      event.preventDefault();
+      const payload = { email: document.getElementById('login-email').value, password: document.getElementById('login-password').value };
+      const res = await fetch(`${API}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const data = await res.json();
+      if (res.status !== 200) { alert(data.detail || 'Erreur de connexion'); return; }
+      setAuth(data);
+      switchPage('dashboard');
+    }
+
+    async function logoutUser() {
+      if (!authToken) return;
+      await fetch(`${API}/auth/logout?token=${authToken}`, { method: 'POST' });
+      userId = null; authToken = null; localStorage.removeItem('fractale_user');
+      document.getElementById('auth-info').textContent = 'Déconnecté';
+      document.getElementById('auth-badge').textContent = 'Hors-ligne';
+    }
+
+    async function createUser(event) {
+      event.preventDefault();
+      const name = document.getElementById('user-name').value || 'Explorateur';
+      const res = await fetch(`${API}/users`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+      const data = await res.json();
+      userId = data.id;
+      document.getElementById('user-info').textContent = `Profil local : ${data.name}`;
+      await refreshProgress();
+      await loadExercises();
+      await loadMap();
+    }
+
+    async function addUnit(event) {
+      event.preventDefault();
+      if (!userId) { alert('Crée ou charge un utilisateur d\'abord'); return; }
+      const payload = {
+        phrase: document.getElementById('phrase').value,
+        translation: document.getElementById('translation').value || null,
+        tags: document.getElementById('tags').value.split(',').map(t => t.trim()).filter(Boolean),
+        unit_type: document.getElementById('unit_type').value,
+        difficulty: parseInt(document.getElementById('difficulty').value, 10),
+        language_from: document.getElementById('language_from').value,
+        language_to: document.getElementById('language_to').value,
+      };
+      const res = await fetch(`${API}/units`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!res.ok) { const err = await res.json(); alert(err.detail || 'Erreur'); return; }
+      await refreshUnits();
+      await loadExercises();
+      await refreshProgress();
+      await loadMap();
+      event.target.reset();
+    }
+
+    async function refreshUnits() {
+      const res = await fetch(`${API}/units`);
+      const data = await res.json();
+      const list = document.getElementById('unit-list');
+      list.innerHTML = '';
+      data.forEach(unit => {
+        const div = document.createElement('div');
+        div.className = 'stat';
+        div.innerHTML = `<strong>${unit.phrase}</strong><span class="muted">${unit.unit_type} • ${unit.tags.join(', ')}</span>`;
+        list.appendChild(div);
+      });
+    }
+
+    function renderExerciseCard(ex, container) {
+      container.innerHTML = '';
+      const badge = document.createElement('div');
+      badge.className = 'badge';
+      badge.textContent = ex.type;
+      const prompt = document.createElement('p');
+      prompt.textContent = ex.prompt;
+      container.appendChild(badge);
+      container.appendChild(prompt);
+      if (ex.type === 'multiple_choice') {
+        ex.options.forEach(option => {
+          const btn = document.createElement('button');
+          btn.textContent = option.value;
+          btn.onclick = () => submitAnswer(ex.id, option.value, container);
+          container.appendChild(btn);
+        });
+      } else if (ex.type === 'drag_drop') {
+        const input = document.createElement('input');
+        const tokens = document.createElement('div');
+        tokens.className = 'token-container';
+        ex.options.forEach(option => {
+          const btn = document.createElement('button');
+          btn.textContent = option.value;
+          btn.type = 'button';
+          btn.onclick = () => { input.value = `${input.value} ${option.value}`.trim(); };
+          tokens.appendChild(btn);
+        });
+        const send = document.createElement('button');
+        send.textContent = 'Valider';
+        send.onclick = () => submitAnswer(ex.id, input.value, container);
+        container.appendChild(tokens);
+        container.appendChild(input);
+        container.appendChild(send);
+      } else {
+        const input = document.createElement('input');
+        const btn = document.createElement('button');
+        btn.textContent = 'Valider';
+        btn.onclick = () => submitAnswer(ex.id, input.value, container);
+        container.appendChild(input);
+        container.appendChild(btn);
+      }
+    }
+
+    async function loadExercises() {
+      const res = await fetch(`${API}/exercises${userId ? `?user_id=${userId}` : ''}`);
+      const data = await res.json();
+      const container = document.getElementById('exercise-list');
+      container.innerHTML = '';
+      data.forEach(ex => {
+        const div = document.createElement('div');
+        div.className = 'exercise';
+        renderExerciseCard(ex, div);
+        container.appendChild(div);
+      });
+    }
+
+    async function fetchNextExercise() {
+      if (!userId) { alert('Active un utilisateur'); return; }
+      const res = await fetch(`${API}/exercises/next?user_id=${userId}`);
+      const data = await res.json();
+      if (!res.ok) { alert(data.detail || 'Aucun exercice'); return; }
+      const container = document.getElementById('current-exercise');
+      renderExerciseCard(data, container);
+      switchPage('dashboard');
+    }
+
+    async function submitAnswer(exerciseId, answer, container) {
+      if (!userId) { alert('Active un utilisateur'); return; }
+      const res = await fetch(`${API}/exercises/${exerciseId}/answer?user_id=${userId}`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify({ answer }) });
+      const data = await res.json();
+      const feedback = document.createElement('div');
+      feedback.className = 'feedback';
+      feedback.textContent = data.correct ? '✅ Bravo !' : `❌ Réponse attendue : ${data.expected}`;
+      container.appendChild(feedback);
+      if (data.highlight) {
+        const hint = document.createElement('div');
+        hint.className = 'muted';
+        hint.textContent = `Indice : ${data.highlight}`;
+        container.appendChild(hint);
+      }
+      const hours = Math.max(1, Math.round((new Date(data.progress.next_review_at) - new Date())/3600000));
+      const meta = document.createElement('div');
+      meta.className = 'muted';
+      meta.textContent = `Maîtrise ${data.progress.proficiency}/5 • Précision ${data.progress.accuracy}% • Rappel dans ~${hours}h`;
+      container.appendChild(meta);
+      await refreshProgress();
+      await loadSessionSummary();
+    }
+
+    async function seed() {
+      const res = await fetch(`${API}/seed`, { method: 'POST' });
+      const data = await res.json();
+      alert(data.message || 'Seed chargée');
+      await refreshUnits();
+      await loadExercises();
+      await refreshProgress();
+      await loadMap();
+    }
+
+    async function loadMap() {
+      const res = await fetch(`${API}/fractal-map`);
+      const data = await res.json();
+      const container = document.getElementById('map');
+      container.innerHTML = '';
+      data.forEach(node => {
+        const block = document.createElement('div');
+        block.className = 'exercise';
+        const combos = node.related_combinations.map(c => `«${c.text}»`).join(', ');
+        block.innerHTML = `<strong>${node.unit.phrase}</strong> <span class="muted">${node.unit.unit_type}</span><br><small>${combos || 'Aucune combinaison générée'}</small>`;
+        container.appendChild(block);
+      });
+    }
+
+    async function loadSessionSummary() {
+      if (!userId) { return; }
+      const res = await fetch(`${API}/session/${userId}`);
+      const data = await res.json();
+      const block = document.getElementById('session-summary');
+      block.innerHTML = '';
+      const stats = document.createElement('div');
+      stats.className = 'stat';
+      stats.innerHTML = `<div>Mastered</div><strong>${data.mastered}</strong>`;
+      const weak = document.createElement('div');
+      weak.className = 'stat';
+      weak.innerHTML = `<div>Faibles</div><strong>${data.weak_units}</strong>`;
+      block.appendChild(stats); block.appendChild(weak);
+      const badgeWrap = document.getElementById('badges');
+      badgeWrap.textContent = data.badges.length ? data.badges.join(' • ') : 'Aucun badge';
+      document.getElementById('streak-value').textContent = data.user.streak;
+    }
+
+    async function loadStorageInfo() {
+      const res = await fetch(`${API}/storage/info`);
+      const data = await res.json();
+      const status = document.getElementById('storage-status');
+      const path = document.getElementById('storage-path');
+      if (data.exists) {
+        status.innerHTML = `<div><strong>Sauvegarde détectée</strong><div class="muted">${data.counts.users} utilisateurs • ${data.counts.units} UM • ${data.counts.progress} suivis</div></div><span class="badge">${data.updated_at?.replace('T',' ') || ''}</span>`;
+        path.textContent = `Emplacement : ${data.path} (${(data.size/1024).toFixed(1)} Ko)`;
+      } else {
+        status.textContent = 'Aucune sauvegarde encore générée';
+        path.textContent = `Emplacement : ${data.path}`;
+      }
+    }
+
+    async function saveStorage() {
+      const feedback = document.getElementById('storage-feedback');
+      const res = await fetch(`${API}/storage/save`, { method: 'POST' });
+      const data = await res.json();
+      feedback.textContent = `${data.message} — ${data.counts.users} users, ${data.counts.units} UM.`;
+      await loadStorageInfo();
+    }
+
+    async function loadStorage() {
+      const feedback = document.getElementById('storage-feedback');
+      const res = await fetch(`${API}/storage/load`, { method: 'POST' });
+      const data = await res.json();
+      feedback.textContent = data.message;
+      if (data.counts.users && !userId && Object.keys(data.counts).length) {
+        const cached = localStorage.getItem('fractale_user');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          userId = parsed.userId;
+          authToken = parsed.token;
+        }
+      }
+      await refreshUnits();
+      await loadExercises();
+      await refreshProgress();
+      await loadMap();
+      await loadSessionSummary();
+      await loadStorageInfo();
+    }
+
+    async function loadAnalytics() {
+      const res = await fetch(`${API}/analytics`);
+      const data = await res.json();
+      const list = document.getElementById('analytics-list');
+      list.innerHTML = '';
+      data.forEach(event => {
+        const li = document.createElement('li');
+        li.textContent = `${event.name} — ${new Date(event.created_at).toLocaleTimeString()}`;
+        list.appendChild(li);
+      });
+    }
+
+    async function refreshProgress() {
+      if (!userId) { return; }
+      const res = await fetch(`${API}/progress?user_id=${userId}`);
+      const data = await res.json();
+      const list = document.getElementById('progress-list');
+      list.innerHTML = '';
+      data.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'stat';
+        const bar = document.createElement('div');
+        bar.className = 'progress-bar';
+        const fill = document.createElement('div');
+        fill.className = 'progress-fill';
+        fill.style.width = `${item.accuracy}%`;
+        bar.appendChild(fill);
+        row.innerHTML = `<div><strong>UM ${item.unit_id.slice(0,6)}…</strong><div class="muted">${item.status} • Maîtrise ${item.mastery_score}</div></div>`;
+        row.appendChild(bar);
+        list.appendChild(row);
+      });
+    }
+
+    document.getElementById('register-form').addEventListener('submit', registerUser);
+    document.getElementById('login-form').addEventListener('submit', loginUser);
+    document.getElementById('logout-btn').addEventListener('click', logoutUser);
+    document.getElementById('user-form').addEventListener('submit', createUser);
+    document.getElementById('unit-form').addEventListener('submit', addUnit);
+    document.getElementById('refresh-exercises').addEventListener('click', loadExercises);
+    document.getElementById('next-exercise').addEventListener('click', fetchNextExercise);
+    document.getElementById('start-session').addEventListener('click', fetchNextExercise);
+    document.getElementById('add-seed').addEventListener('click', seed);
+    document.getElementById('session-btn').addEventListener('click', loadSessionSummary);
+    document.getElementById('analytics-btn').addEventListener('click', loadAnalytics);
+    document.getElementById('save-btn').addEventListener('click', saveStorage);
+    document.getElementById('load-btn').addEventListener('click', loadStorage);
+
+    (async function init() {
+      const cached = localStorage.getItem('fractale_user');
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (parsed.userId && parsed.token) {
+            userId = parsed.userId; authToken = parsed.token;
+            document.getElementById('auth-badge').textContent = parsed.email || 'Connecté';
+            await refreshUnits(); await loadExercises(); await refreshProgress(); await loadMap(); await loadSessionSummary();
+            await loadStorageInfo();
+            return;
+          }
+        } catch (_) { /* ignore parse errors */ }
+      }
+      // Auto bootstrap for immédiate usage
+      await bootstrapDemo();
+      await loadStorageInfo();
+    })();
+  </script>
+</body>
+</html>
